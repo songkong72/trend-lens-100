@@ -19,6 +19,7 @@ import {
     AlertCircle,
     Sparkles,
     ArrowLeft,
+    ExternalLink,
 } from "lucide-react";
 import { getAISummary, VideoSummary } from "@/services/gemini";
 import {
@@ -71,11 +72,6 @@ export function HomeView({ onSelectVideo }: { onSelectVideo: (id: string) => voi
     const [hotKeywords, setHotKeywords] = useState<HotKeyword[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    const handleKeywordSearch = (keyword: string) => {
-        const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(keyword)}`;
-        window.open(url, '_blank');
-    };
 
     useEffect(() => {
         async function fetchVideos() {
@@ -214,9 +210,11 @@ export function HomeView({ onSelectVideo }: { onSelectVideo: (id: string) => voi
                     <div className="space-y-6">
                         {hotKeywords.length > 0 ? (
                             hotKeywords.map((kw, i) => (
-                                <div
+                                <a
                                     key={i}
-                                    onClick={() => handleKeywordSearch(kw.term)}
+                                    href={`https://www.youtube.com/results?search_query=${encodeURIComponent(kw.term)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     className="flex items-center justify-between group/kw cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-all"
                                 >
                                     <div className="flex items-center gap-4">
@@ -225,9 +223,9 @@ export function HomeView({ onSelectVideo }: { onSelectVideo: (id: string) => voi
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-[11px] font-black text-green-500">{kw.growth}</span>
-                                        <Search className="w-3 h-3 text-muted group-hover/kw:text-brand opacity-0 group-hover/kw:opacity-100 transition-all" />
+                                        <ExternalLink className="w-3 h-3 text-muted group-hover/kw:text-brand opacity-0 group-hover/kw:opacity-100 transition-all" />
                                     </div>
-                                </div>
+                                </a>
                             ))
                         ) : (
                             [...Array(5)].map((_, i) => (
@@ -235,20 +233,22 @@ export function HomeView({ onSelectVideo }: { onSelectVideo: (id: string) => voi
                             ))
                         )}
                     </div>
-                    <div
-                        onClick={() => hotKeywords[0] && handleKeywordSearch(hotKeywords[0].term)}
-                        className="mt-12 p-6 rounded-[2rem] bg-accent/5 border border-accent/10 cursor-pointer hover:border-accent/40 transition-all group/insight"
+                    <a
+                        href={hotKeywords[0] ? `https://www.youtube.com/results?search_query=${encodeURIComponent(hotKeywords[0].term)}` : "#"}
+                        target={hotKeywords[0] ? "_blank" : undefined}
+                        rel={hotKeywords[0] ? "noopener noreferrer" : undefined}
+                        className="mt-12 p-6 rounded-[2rem] bg-accent/5 border border-accent/10 cursor-pointer hover:border-accent/40 transition-all group/insight block"
                     >
                         <p className="text-[11px] text-accent font-black uppercase tracking-widest mb-2 flex items-center justify-between">
                             AI INSIGHT
-                            <Search className="w-3 h-3 opacity-0 group-hover/insight:opacity-100 transition-opacity" />
+                            <ExternalLink className="w-3 h-3 opacity-0 group-hover/insight:opacity-100 transition-opacity" />
                         </p>
                         <p className="text-xs text-muted leading-relaxed font-medium">
                             {hotKeywords[0]
                                 ? `현재 '${hotKeywords[0].term}' 키워드가 인기 급상승 영상들 사이에서 가장 높은 비중을 차지하고 있습니다.`
                                 : "인기 영상 데이터를 분석하여 실시간 화제 키워드를 추출하고 있습니다."}
                         </p>
-                    </div>
+                    </a>
                 </div>
             </div>
         </div>
@@ -286,10 +286,6 @@ export function TrendsView({ onSelectVideo }: { onSelectVideo: (id: string) => v
         fetchVideos();
     }, [activeSubTab]);
 
-    const handleKeywordSearch = (keyword: string) => {
-        const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(keyword)}`;
-        window.open(url, '_blank');
-    };
 
     return (
         <div className="space-y-10">
@@ -477,10 +473,15 @@ export function TrendsView({ onSelectVideo }: { onSelectVideo: (id: string) => v
                                                         <span className="text-xl font-black text-white/40">{i + 1}</span>
                                                     </td>
                                                     <td className="px-8 py-6">
-                                                        <div onClick={() => handleKeywordSearch(data.term)} className="cursor-pointer">
-                                                            <p className="font-bold text-base group-hover:text-brand transition-colors">{data.term}</p>
-                                                            <p className="text-[10px] text-muted font-medium mt-1 line-clamp-1 group-hover:text-white/60 transition-colors">{data.description}</p>
-                                                        </div>
+                                                        <a
+                                                            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(data.term)}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="block cursor-pointer group/kw-link"
+                                                        >
+                                                            <p className="font-bold text-base group-hover/kw-link:text-brand transition-colors">{data.term}</p>
+                                                            <p className="text-[10px] text-muted font-medium mt-1 line-clamp-1 group-hover/kw-link:text-white/60 transition-colors">{data.description}</p>
+                                                        </a>
                                                     </td>
                                                     <td className="px-8 py-6">
                                                         <div className="flex items-end gap-1 h-8 w-32">
@@ -500,20 +501,25 @@ export function TrendsView({ onSelectVideo }: { onSelectVideo: (id: string) => v
                                                         </div>
                                                     </td>
                                                     <td className="px-8 py-6">
-                                                        <button
-                                                            onClick={() => handleKeywordSearch(data.term)}
-                                                            className="text-xs text-brand font-black hover:text-white underline transition-colors decoration-brand/50 underline-offset-4"
+                                                        <a
+                                                            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(data.term)}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-xs text-brand font-black hover:text-white underline transition-colors decoration-brand/50 underline-offset-4 inline-flex items-center gap-1"
                                                         >
                                                             유튜브 검색
-                                                        </button>
+                                                            <ExternalLink className="w-3 h-3" />
+                                                        </a>
                                                     </td>
                                                     <td className="px-8 py-6 text-right">
-                                                        <button
-                                                            onClick={() => handleKeywordSearch(data.term)}
-                                                            className="p-3 rounded-xl bg-white/5 border border-white/10 text-muted hover:border-brand/40 hover:text-brand transition-all"
+                                                        <a
+                                                            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(data.term)}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex p-3 rounded-xl bg-white/5 border border-white/10 text-muted hover:border-brand/40 hover:text-brand transition-all"
                                                         >
                                                             <Search className="w-4 h-4" />
-                                                        </button>
+                                                        </a>
                                                     </td>
                                                 </tr>
                                             ))
@@ -548,11 +554,6 @@ export function InsightsView({ videoId, setVideoId }: { videoId: string | null; 
     const [aiSummary, setAiSummary] = useState<VideoSummary | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isAiLoading, setIsAiLoading] = useState(false);
-
-    const handleKeywordSearch = (keyword: string) => {
-        const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(keyword)}`;
-        window.open(url, '_blank');
-    };
 
     useEffect(() => {
         if (videoId) {
@@ -743,15 +744,17 @@ export function InsightsView({ videoId, setVideoId }: { videoId: string | null; 
                                     </p>
                                     <div className="flex flex-wrap gap-4">
                                         {aiSummary.popularFactor.map((factor, idx) => (
-                                            <div
+                                            <a
                                                 key={idx}
-                                                onClick={() => handleKeywordSearch(factor)}
+                                                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(factor)}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                                 className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-2 group/tag hover:border-brand hover:bg-brand/5 transition-all cursor-pointer"
                                             >
                                                 <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
                                                 <span className="text-sm font-black text-muted group-hover/tag:text-white transition-colors uppercase tracking-widest">{factor}</span>
-                                                <Search className="w-3 h-3 text-muted group-hover/tag:text-white opacity-0 group-hover/tag:opacity-100 transition-all" />
-                                            </div>
+                                                <ExternalLink className="w-3 h-3 text-muted group-hover/tag:text-white opacity-0 group-hover/tag:opacity-100 transition-all" />
+                                            </a>
                                         ))}
                                     </div>
                                 </div>
