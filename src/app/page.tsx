@@ -61,7 +61,7 @@ export default function Home() {
                 {activeTab === "insights" && (
                   <InsightsView
                     videoId={selectedVideoId}
-                    onSearch={() => setSelectedVideoId(null)}
+                    setVideoId={setSelectedVideoId}
                   />
                 )}
                 {activeTab === "settings" && <SettingsView />}

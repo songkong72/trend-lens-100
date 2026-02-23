@@ -510,7 +510,7 @@ export function TrendsView({ onSelectVideo }: { onSelectVideo: (id: string) => v
 }
 
 // 3. 시청자 분석 (Insights): 채널별 성별/연령별 통계
-export function InsightsView({ videoId, onSearch }: { videoId: string | null; onSearch: () => void }) {
+export function InsightsView({ videoId, setVideoId }: { videoId: string | null; setVideoId: (id: string | null) => void }) {
     const [searchQuery, setSearchQuery] = useState("");
     const [video, setVideo] = useState<YouTubeVideo | null>(null);
     const [demographics, setDemographics] = useState<Demographics | null>(null);
@@ -521,6 +521,11 @@ export function InsightsView({ videoId, onSearch }: { videoId: string | null; on
     useEffect(() => {
         if (videoId) {
             fetchAnalysis(videoId);
+        } else {
+            setVideo(null);
+            setDemographics(null);
+            setAiSummary(null);
+            setSearchQuery("");
         }
     }, [videoId]);
 
@@ -593,8 +598,7 @@ export function InsightsView({ videoId, onSearch }: { videoId: string | null; on
                         />
                         <button
                             onClick={() => {
-                                if (searchQuery) fetchAnalysis(searchQuery);
-                                onSearch();
+                                if (searchQuery) setVideoId(searchQuery);
                             }}
                             className="px-10 py-5 bg-brand text-white rounded-[1.5rem] font-black uppercase tracking-widest text-sm shadow-xl shadow-brand/30 hover:scale-105 active:scale-95 transition-all"
                         >
@@ -618,7 +622,7 @@ export function InsightsView({ videoId, onSearch }: { videoId: string | null; on
                         className="mb-6"
                     >
                         <button
-                            onClick={() => onSearch()}
+                            onClick={() => setVideoId(null)}
                             className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest hover:bg-white/10 hover:border-brand/50 hover:text-brand transition-all group"
                         >
                             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
