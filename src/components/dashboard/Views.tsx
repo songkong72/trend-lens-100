@@ -14,7 +14,6 @@ import {
     Eye,
     MessageSquare,
     PlayCircle,
-    ExternalLink,
     ChevronRight,
     Filter,
     AlertCircle,
@@ -30,7 +29,8 @@ import {
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { getTrendingVideos, getVideoDetails, type YouTubeVideo } from "@/services/youtube";
-import { predictAudience, type Demographics } from "@/services/analysis";
+import { predictAudience, predictAudienceWithAI, type Demographics } from "@/services/analysis";
+import { getHotKeywords, type HotKeyword } from "@/services/trends";
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -68,6 +68,7 @@ function formatRelativeTime(dateString: string) {
 // 1. 홈 (Home): 대시보드 요약 정보
 export function HomeView({ onSelectVideo }: { onSelectVideo: (id: string) => void }) {
     const [videos, setVideos] = useState<YouTubeVideo[]>([]);
+    const [hotKeywords, setHotKeywords] = useState<HotKeyword[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -81,6 +82,8 @@ export function HomeView({ onSelectVideo }: { onSelectVideo: (id: string) => voi
                     setError("데이터를 불러올 수 없습니다.");
                 } else {
                     setVideos(data.slice(0, 5));
+                    // 실시간 키워드 추출 (비동기)
+                    getHotKeywords(data.slice(0, 30)).then(setHotKeywords);
                 }
             } catch (err) {
                 console.error(err);
@@ -204,25 +207,29 @@ export function HomeView({ onSelectVideo }: { onSelectVideo: (id: string) => voi
                         </h3>
                     </div>
                     <div className="space-y-6">
-                        {[
-                            { text: "NewJeans", growth: "+150%", color: "text-brand" },
-                            { text: "AI Video Editor", growth: "+92%", color: "text-accent" },
-                            { text: "DeepSeek API", growth: "+84%", color: "text-white" },
-                            { text: "Cooking Vlog", growth: "+45%", color: "text-white" },
-                            { text: "iPhone 16 Pro", growth: "+32%", color: "text-white" },
-                        ].map((kw, i) => (
-                            <div key={i} className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-2 h-2 rounded-full bg-white/20 group-hover:bg-brand transition-colors" />
-                                    <span className={cn("font-bold text-sm", kw.color)}>{kw.text}</span>
+                        {hotKeywords.length > 0 ? (
+                            hotKeywords.map((kw, i) => (
+                                <div key={i} className="flex items-center justify-between group/kw">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-2 h-2 rounded-full bg-white/20 group-hover/kw:bg-brand transition-colors" />
+                                        <span className="font-bold text-sm text-white group-hover/kw:text-brand transition-colors">{kw.term}</span>
+                                    </div>
+                                    <span className="text-[11px] font-black text-green-500">{kw.growth}</span>
                                 </div>
-                                <span className="text-[11px] font-black text-green-500">{kw.growth}</span>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                            [...Array(5)].map((_, i) => (
+                                <div key={i} className="h-6 w-full bg-white/5 rounded-lg animate-pulse" />
+                            ))
+                        )}
                     </div>
                     <div className="mt-12 p-6 rounded-[2rem] bg-accent/5 border border-accent/10">
                         <p className="text-[11px] text-accent font-black uppercase tracking-widest mb-2">AI INSIGHT</p>
-                        <p className="text-xs text-muted leading-relaxed font-medium">현재 영상 제작 관련 &apos;AI 기술&apos; 키워드의 검색량이 주간 평균 대비 85% 증가했습니다.</p>
+                        <p className="text-xs text-muted leading-relaxed font-medium">
+                            {hotKeywords[0]
+                                ? `현재 '${hotKeywords[0].term}' 키워드가 인기 급상승 영상들 사이에서 가장 높은 비중을 차지하고 있습니다.`
+                                : "인기 영상 데이터를 분석하여 실시간 화제 키워드를 추출하고 있습니다."}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -234,27 +241,28 @@ export function HomeView({ onSelectVideo }: { onSelectVideo: (id: string) => voi
 export function TrendsView({ onSelectVideo }: { onSelectVideo: (id: string) => void }) {
     const [activeSubTab, setActiveSubTab] = useState("popular100");
     const [videos, setVideos] = useState<YouTubeVideo[]>([]);
+    const [hotKeywords, setHotKeywords] = useState<HotKeyword[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         async function fetchVideos() {
-            if (activeSubTab === "popular100") {
-                try {
-                    setIsLoading(true);
-                    setError(null);
-                    const data = await getTrendingVideos("KR", 100);
-                    if (data.length === 0) {
-                        setError("데이터를 불러올 수 없습니다.");
-                    } else {
-                        setVideos(data);
-                    }
-                } catch (err) {
-                    console.error(err);
+            try {
+                setIsLoading(true);
+                setError(null);
+                const data = await getTrendingVideos("KR", 100);
+                if (data.length === 0) {
                     setError("데이터를 불러올 수 없습니다.");
-                } finally {
-                    setIsLoading(false);
+                } else {
+                    setVideos(data);
+                    // 실시간 키워드 추출
+                    getHotKeywords(data.slice(0, 30)).then(setHotKeywords);
                 }
+            } catch (err) {
+                console.error(err);
+                setError("데이터를 불러올 수 없습니다.");
+            } finally {
+                setIsLoading(false);
             }
         }
         fetchVideos();
@@ -439,53 +447,57 @@ export function TrendsView({ onSelectVideo }: { onSelectVideo: (id: string) => v
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
-                                        {[
-                                            { term: "NewJeans", growth: "+154%", trend: [20, 30, 45, 60, 85, 95] },
-                                            { term: "DeepSeek-V3", growth: "+122%", trend: [10, 15, 30, 50, 70, 90] },
-                                            { term: "iPhone 16 Pro Max", growth: "+85%", trend: [40, 45, 50, 48, 55, 65] },
-                                            { term: "K-Pop Festival 2026", growth: "+76%", trend: [5, 10, 20, 35, 50, 60] },
-                                            { term: "GPT-5 Features", growth: "+64%", trend: [20, 25, 30, 40, 45, 50] },
-                                            { term: "Travel to Japan", growth: "+42%", trend: [60, 65, 70, 68, 72, 75] },
-                                            { term: "Easy Home Cooking", growth: "+38%", trend: [30, 35, 40, 42, 45, 48] },
-                                            { term: "Tesla Model 2", growth: "+31%", trend: [10, 15, 20, 18, 22, 28] },
-                                        ].map((data, i) => (
-                                            <tr key={i} className="group hover:bg-white/5 transition-colors">
-                                                <td className="px-8 py-6">
-                                                    <span className="text-xl font-black text-white/40">{i + 1}</span>
-                                                </td>
-                                                <td className="px-8 py-6">
-                                                    <span className="font-bold text-base group-hover:text-brand transition-colors cursor-pointer">{data.term}</span>
-                                                </td>
-                                                <td className="px-8 py-6">
-                                                    {/* 미니 트렌드 그래프 (더미) */}
-                                                    <div className="flex items-end gap-1 h-8 w-32">
-                                                        {data.trend.map((h, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                className="flex-1 bg-brand/20 rounded-t-sm group-hover:bg-brand/40 transition-colors"
-                                                                style={{ height: `${h}%` }}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-6">
-                                                    <div className="flex items-center gap-1.5 text-green-400 font-bold">
-                                                        <ArrowUpRight className="w-4 h-4" />
-                                                        <span className="text-sm">{data.growth}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-6">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-muted font-bold underline cursor-pointer hover:text-white">2.4K+ Videos</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-6 text-right">
-                                                    <button className="p-3 rounded-xl bg-white/5 border border-white/10 text-muted hover:border-brand/40 hover:text-brand transition-all">
-                                                        <ExternalLink className="w-4 h-4" />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                        {hotKeywords.length > 0 ? (
+                                            hotKeywords.map((data, i) => (
+                                                <tr key={i} className="group hover:bg-white/5 transition-colors">
+                                                    <td className="px-8 py-6">
+                                                        <span className="text-xl font-black text-white/40">{i + 1}</span>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div>
+                                                            <p className="font-bold text-base group-hover:text-brand transition-colors cursor-pointer">{data.term}</p>
+                                                            <p className="text-[10px] text-muted font-medium mt-1 line-clamp-1 group-hover:text-white/60 transition-colors">{data.description}</p>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-end gap-1 h-8 w-32">
+                                                            {data.trend.map((h, idx) => (
+                                                                <div
+                                                                    key={idx}
+                                                                    className="flex-1 bg-brand/20 rounded-t-sm group-hover:bg-brand/40 transition-colors"
+                                                                    style={{ height: `${h}%` }}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-1.5 text-green-400 font-bold">
+                                                            <ArrowUpRight className="w-4 h-4" />
+                                                            <span className="text-sm">{data.growth}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <span className="text-xs text-muted font-bold">AI 분석 완료</span>
+                                                    </td>
+                                                    <td className="px-8 py-6 text-right">
+                                                        <button className="p-3 rounded-xl bg-white/5 border border-white/10 text-muted hover:border-brand/40 hover:text-brand transition-all">
+                                                            <Search className="w-4 h-4" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            [...Array(8)].map((_, i) => (
+                                                <tr key={i} className="animate-pulse">
+                                                    <td className="px-8 py-6"><div className="h-6 w-8 bg-white/10 rounded" /></td>
+                                                    <td className="px-8 py-6"><div className="h-6 w-48 bg-white/10 rounded" /></td>
+                                                    <td className="px-8 py-6"><div className="h-8 w-32 bg-white/10 rounded" /></td>
+                                                    <td className="px-8 py-6"><div className="h-6 w-16 bg-white/10 rounded" /></td>
+                                                    <td className="px-8 py-6"><div className="h-6 w-24 bg-white/10 rounded" /></td>
+                                                    <td className="px-8 py-6"><div className="h-10 w-10 bg-white/10 rounded ml-auto" /></td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
@@ -519,13 +531,20 @@ export function InsightsView({ videoId, onSearch }: { videoId: string | null; on
             const videoData = await getVideoDetails(id);
             if (videoData) {
                 setVideo(videoData);
-                const prediction = predictAudience(videoData.categoryId || "0");
-                setDemographics(prediction);
+
+                // 처음엔 기본 로직으로 바로 보여줌
+                const basePrediction = predictAudience(videoData.categoryId || "0");
+                setDemographics(basePrediction);
 
                 // AI 요약 비동기 호출
                 setIsAiLoading(true);
                 getAISummary(videoData.title, videoData.description || "").then(summary => {
                     setAiSummary(summary);
+                });
+
+                // AI 시청자 분석 비동기 호출 (정확도 향상)
+                predictAudienceWithAI(videoData.title, videoData.description || "", videoData.categoryId || "0").then(aiDemographics => {
+                    setDemographics(aiDemographics);
                     setIsAiLoading(false);
                 });
             }

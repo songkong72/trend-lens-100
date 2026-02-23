@@ -1,8 +1,13 @@
 /**
  * 지능형 통계 예측 알고리즘 (Intelligent Statistical Prediction Algorithm)
  * 타 채널의 시청자 데이터를 직접 가져올 수 없는 한계를 극복하기 위해
- * 영상 카테고리 기반으로 인구통계 분포를 예측 시뮬레이션합니다.
+ * 영상 카테고리 기반 및 AI 문맥 분석을 통해 인구통계 분포를 예측 시뮬레이션합니다.
  */
+
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(API_KEY || "");
 
 export interface Demographics {
     gender: { name: string; value: number; color: string }[];
@@ -126,4 +131,54 @@ export function predictAudience(categoryId: string): Demographics {
     }
 
     return { gender, age, categoryName };
+}
+
+export async function predictAudienceWithAI(title: string, description: string, categoryId: string): Promise<Demographics> {
+    const basePrediction = predictAudience(categoryId);
+
+    if (!API_KEY) return basePrediction;
+
+    try {
+        const model = genAI.getGenerativeModel({
+            model: "gemini-flash-latest",
+            generationConfig: {
+                responseMimeType: "application/json",
+            }
+        });
+
+        const prompt = `
+            다음 유튜브 영상의 제목과 설명을 바탕으로 이 영상을 소비할 것으로 예상되는 핵심 시청자층(성별 및 연령대)을 분석해줘.
+            
+            영상 제목: "${title}"
+            영상 설명: "${description.substring(0, 500)}..."
+            
+            다음 JSON 형식으로 응답해줘:
+            {
+                "gender": [
+                    { "name": "남성", "value": 0, "color": "#3B82F6" },
+                    { "name": "여성", "value": 0, "color": "#FF4B2B" }
+                ],
+                "age": [
+                    { "name": "10대", "value": 0 },
+                    { "name": "20대", "value": 0 },
+                    { "name": "30대", "value": 0 },
+                    { "name": "40대", "value": 0 },
+                    { "name": "50대+", "value": 0 }
+                ],
+                "categoryName": "기존 카테고리명"
+            }
+            
+            * 성별 합계는 100, 연령대 합계는 100이 되어야 함.
+            * categoryName은 "${basePrediction.categoryName}" 그대로 사용하거나 더 적절한 한국어 분류로 변경 가능.
+        `;
+
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        const data = JSON.parse(text);
+
+        return data as Demographics;
+    } catch (error) {
+        console.error("AI Demographic prediction failed:", error);
+        return basePrediction;
+    }
 }
