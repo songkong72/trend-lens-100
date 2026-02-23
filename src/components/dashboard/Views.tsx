@@ -268,6 +268,11 @@ export function TrendsView({ onSelectVideo }: { onSelectVideo: (id: string) => v
         fetchVideos();
     }, [activeSubTab]);
 
+    const handleKeywordSearch = (keyword: string) => {
+        const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(keyword)}`;
+        window.open(url, '_blank');
+    };
+
     return (
         <div className="space-y-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
@@ -454,8 +459,8 @@ export function TrendsView({ onSelectVideo }: { onSelectVideo: (id: string) => v
                                                         <span className="text-xl font-black text-white/40">{i + 1}</span>
                                                     </td>
                                                     <td className="px-8 py-6">
-                                                        <div>
-                                                            <p className="font-bold text-base group-hover:text-brand transition-colors cursor-pointer">{data.term}</p>
+                                                        <div onClick={() => handleKeywordSearch(data.term)} className="cursor-pointer">
+                                                            <p className="font-bold text-base group-hover:text-brand transition-colors">{data.term}</p>
                                                             <p className="text-[10px] text-muted font-medium mt-1 line-clamp-1 group-hover:text-white/60 transition-colors">{data.description}</p>
                                                         </div>
                                                     </td>
@@ -477,10 +482,18 @@ export function TrendsView({ onSelectVideo }: { onSelectVideo: (id: string) => v
                                                         </div>
                                                     </td>
                                                     <td className="px-8 py-6">
-                                                        <span className="text-xs text-muted font-bold">AI 분석 완료</span>
+                                                        <button
+                                                            onClick={() => handleKeywordSearch(data.term)}
+                                                            className="text-xs text-muted font-bold hover:text-white underline transition-colors"
+                                                        >
+                                                            관련 영상 보기
+                                                        </button>
                                                     </td>
                                                     <td className="px-8 py-6 text-right">
-                                                        <button className="p-3 rounded-xl bg-white/5 border border-white/10 text-muted hover:border-brand/40 hover:text-brand transition-all">
+                                                        <button
+                                                            onClick={() => handleKeywordSearch(data.term)}
+                                                            className="p-3 rounded-xl bg-white/5 border border-white/10 text-muted hover:border-brand/40 hover:text-brand transition-all"
+                                                        >
                                                             <Search className="w-4 h-4" />
                                                         </button>
                                                     </td>
