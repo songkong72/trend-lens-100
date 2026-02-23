@@ -1,0 +1,23 @@
+{
+    "name": "Trend-Lens 100",
+    "short_name": "Trend-Lens",
+    "description": "실시간 유튜브 인기 영상 및 검색어 통계 분석 서비스",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#ff0000",
+    "icons": [
+        {
+            "src": "next.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "next.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
+        }
+    ]
+}
