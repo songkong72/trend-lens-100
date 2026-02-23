@@ -72,6 +72,11 @@ export function HomeView({ onSelectVideo }: { onSelectVideo: (id: string) => voi
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const handleKeywordSearch = (keyword: string) => {
+        const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(keyword)}`;
+        window.open(url, '_blank');
+    };
+
     useEffect(() => {
         async function fetchVideos() {
             try {
@@ -209,12 +214,19 @@ export function HomeView({ onSelectVideo }: { onSelectVideo: (id: string) => voi
                     <div className="space-y-6">
                         {hotKeywords.length > 0 ? (
                             hotKeywords.map((kw, i) => (
-                                <div key={i} className="flex items-center justify-between group/kw">
+                                <div
+                                    key={i}
+                                    onClick={() => handleKeywordSearch(kw.term)}
+                                    className="flex items-center justify-between group/kw cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-all"
+                                >
                                     <div className="flex items-center gap-4">
                                         <div className="w-2 h-2 rounded-full bg-white/20 group-hover/kw:bg-brand transition-colors" />
                                         <span className="font-bold text-sm text-white group-hover/kw:text-brand transition-colors">{kw.term}</span>
                                     </div>
-                                    <span className="text-[11px] font-black text-green-500">{kw.growth}</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[11px] font-black text-green-500">{kw.growth}</span>
+                                        <Search className="w-3 h-3 text-muted group-hover/kw:text-brand opacity-0 group-hover/kw:opacity-100 transition-all" />
+                                    </div>
                                 </div>
                             ))
                         ) : (
@@ -223,8 +235,14 @@ export function HomeView({ onSelectVideo }: { onSelectVideo: (id: string) => voi
                             ))
                         )}
                     </div>
-                    <div className="mt-12 p-6 rounded-[2rem] bg-accent/5 border border-accent/10">
-                        <p className="text-[11px] text-accent font-black uppercase tracking-widest mb-2">AI INSIGHT</p>
+                    <div
+                        onClick={() => hotKeywords[0] && handleKeywordSearch(hotKeywords[0].term)}
+                        className="mt-12 p-6 rounded-[2rem] bg-accent/5 border border-accent/10 cursor-pointer hover:border-accent/40 transition-all group/insight"
+                    >
+                        <p className="text-[11px] text-accent font-black uppercase tracking-widest mb-2 flex items-center justify-between">
+                            AI INSIGHT
+                            <Search className="w-3 h-3 opacity-0 group-hover/insight:opacity-100 transition-opacity" />
+                        </p>
                         <p className="text-xs text-muted leading-relaxed font-medium">
                             {hotKeywords[0]
                                 ? `현재 '${hotKeywords[0].term}' 키워드가 인기 급상승 영상들 사이에서 가장 높은 비중을 차지하고 있습니다.`
@@ -484,9 +502,9 @@ export function TrendsView({ onSelectVideo }: { onSelectVideo: (id: string) => v
                                                     <td className="px-8 py-6">
                                                         <button
                                                             onClick={() => handleKeywordSearch(data.term)}
-                                                            className="text-xs text-muted font-bold hover:text-white underline transition-colors"
+                                                            className="text-xs text-brand font-black hover:text-white underline transition-colors decoration-brand/50 underline-offset-4"
                                                         >
-                                                            관련 영상 보기
+                                                            유튜브 검색
                                                         </button>
                                                     </td>
                                                     <td className="px-8 py-6 text-right">
@@ -530,6 +548,11 @@ export function InsightsView({ videoId, setVideoId }: { videoId: string | null; 
     const [aiSummary, setAiSummary] = useState<VideoSummary | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isAiLoading, setIsAiLoading] = useState(false);
+
+    const handleKeywordSearch = (keyword: string) => {
+        const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(keyword)}`;
+        window.open(url, '_blank');
+    };
 
     useEffect(() => {
         if (videoId) {
@@ -722,10 +745,12 @@ export function InsightsView({ videoId, setVideoId }: { videoId: string | null; 
                                         {aiSummary.popularFactor.map((factor, idx) => (
                                             <div
                                                 key={idx}
-                                                className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-2 group/tag hover:border-brand/50 transition-all cursor-default"
+                                                onClick={() => handleKeywordSearch(factor)}
+                                                className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 flex items-center gap-2 group/tag hover:border-brand hover:bg-brand/5 transition-all cursor-pointer"
                                             >
                                                 <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
                                                 <span className="text-sm font-black text-muted group-hover/tag:text-white transition-colors uppercase tracking-widest">{factor}</span>
+                                                <Search className="w-3 h-3 text-muted group-hover/tag:text-white opacity-0 group-hover/tag:opacity-100 transition-all" />
                                             </div>
                                         ))}
                                     </div>
